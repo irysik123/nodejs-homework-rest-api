@@ -3,5 +3,7 @@ const ctrlWrapper = require("./ctrlWrapper")
 
 module.exports = {
     validation,
-    ctrlWrapper
+    ctrlWrapper,
+    handleMongooseError,
+    isValidId
 }
