@@ -1,6 +1,6 @@
 const express = require("express");
 
-const { validation, ctrlWrapper, isValidId } = require("../../middlewares");
+const { validation, ctrlWrapper, isValidId, validationFavorite } = require("../../middlewares");
 const { contactSchema, favoriteSchema } = require("../../schemas");
 const { contacts: cntr } = require("../../controlers");
 
@@ -18,6 +18,6 @@ router.delete("/:contactId", isValidId, ctrlWrapper(cntr.removeById));
 
 router.put("/:contactId", isValidId, validateMiddleware, ctrlWrapper(cntr.updateById));
 
-router.patch("/:contactId", isValidId, validation(favoriteSchema), ctrlWrapper(cntr.updateStatus))
+router.patch("/:contactId", isValidId, validationFavorite(favoriteSchema), ctrlWrapper(cntr.updateStatus))
 
 module.exports = router;
