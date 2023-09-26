@@ -3,4 +3,4 @@ const handleMongooseError = (error, data, next) => {
     next()
 }
 
-module.exposrts = handleMongooseError;
+module.exports = handleMongooseError;
