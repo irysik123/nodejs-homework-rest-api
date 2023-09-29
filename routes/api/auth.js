@@ -1,5 +1,5 @@
 const express = require("express");
-const { route } = require("express/lib/application");
+
 const { ctrlWrapper } = require("../../middlewares");
 
 const ctrl = require("../../controlers/users/users");
@@ -15,6 +15,6 @@ router.post(
   ctrlWrapper(ctrl.register)
 );
 
-router.post("/login", validation(schemas.loginSchema), ctrlWrapper(ctrl.login))
+router.post("/login", validation(schemas.loginSchema), ctrlWrapper(ctrl.login));
 
 module.exports = router;
