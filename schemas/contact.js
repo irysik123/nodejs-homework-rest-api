@@ -10,6 +10,7 @@ const contactSchema = Joi.object({
   phone: Joi.number().required().messages({
     "any.required": "missing required phone field",
   }),
+
 });
 
 module.exports = contactSchema;
