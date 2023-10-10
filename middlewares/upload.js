@@ -8,7 +8,14 @@ const multerConfig = multer.diskStorage({
 })
 
 const upload = multer({
-    storage: multerConfig
+    storage: multerConfig,
+    fileFilter: function (req, file, cbk) {
+      if (file.mimetype.startsWith('image/')) {
+        cbk(null, true);
+      } else {
+        throw HttpError(400, "Please upload images only");
+      }
+    }
 })
 
 module.exports = upload;
