@@ -4,6 +4,7 @@ const gravatar = require("gravatar");
 const path = require("path");
 const fs = require("fs/promises");
 const Jimp = require("jimp");
+const { v4: uuidv4 } = require("uuid");
 
 const { User } = require("../../models/user");
 
@@ -30,7 +31,26 @@ const register = async (req, res) => {
     ...req.body,
     password: hashPassword,
     avatarURL,
+    verificationToken: uuidv4(),
   });
+
+  const sgMail = require("@sendgrid/mail");
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  const msg = {
+    to: email, // Change to your recipient
+    from: "vysotskaya.iryna@gmail.com", // Change to your verified sender
+    subject: "Register verification",
+    text: "Your email was verified",
+    html: `<a href="http://localhost:3000/users/verify/${newUser.verificationToken}">Verify your email<a/>`,
+  };
+  sgMail
+    .send(msg)
+    .then(() => {
+      res.send("email was sent");
+    })
+    .catch((error) => {
+      console.error(error);
+    });
 
   res.status(201).json({
     user: { email: newUser.email, subscription: newUser.subscription },
@@ -42,6 +62,8 @@ const login = async (req, res) => {
   const user = await User.findOne({ email });
   if (!user) {
     throw HttpError(401, "Email or password is wrong");
+  } else if (!user.verify) {
+    throw HttpError(401, "Your email was not verified");
   }
 
   const passwordCompare = await bcrypt.compare(password, user.password);
@@ -106,10 +128,57 @@ const updateAvatar = async (req, res) => {
   }
 };
 
+const verificationToken = async (req, res) => {
+  const doc = await User.findOneAndUpdate(
+    { verificationToken: req.params.verificationToken },
+    { verificationToken: null, verify: true }
+  );
+  if (doc) {
+    res.status(200).json({ message: "Verification successful" });
+  } else {
+    res.status(404).json({ message: "User not found" });
+  }
+};
+
+const verify = async (req, res) => {
+  if (!req.body.email) {
+    throw HttpError(400, "missing required field email");
+  } else {
+    const user = await User.findOne({ email: req.body.email });
+    if (user.verify) {
+      throw HttpError(400, "Verification has already been passed");
+    } else {
+      const sgMail = require("@sendgrid/mail");
+      sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+      const msg = {
+        to: user.email, // Change to your recipient
+        from: "vysotskaya.iryna@gmail.com", // Change to your verified sender
+        subject: "Register verification",
+        text: "Your email was verified",
+        html: `<a href="http://localhost:3000/users/verify/${user.verificationToken}">Verify your email<a/>`,
+      };
+      sgMail
+        .send(msg)
+        .then(() => {
+          res.send("email was sent");
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+
+      res.status(200).json({
+        message: "Verification email sent"
+      });
+    }
+  }
+};
+
 module.exports = {
   register: ctrlWrapper(register),
   login: ctrlWrapper(login),
   getCurrent: ctrlWrapper(getCurrent),
   logout: ctrlWrapper(logout),
   updateAvatar: ctrlWrapper(updateAvatar),
+  verificationToken: ctrlWrapper(verificationToken),
+  verify: ctrlWrapper(verify),
 };
